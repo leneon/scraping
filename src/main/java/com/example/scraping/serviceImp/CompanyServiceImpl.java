@@ -19,13 +19,18 @@ public class CompanyServiceImpl implements CompanyService {
     @Autowired
     private CompanyRepository companyRepository;
 
-    @Override
     public Company save(CompanyDto dto) {
-        Company company = new Company();
-        company.setName(dto.getName());
-        return companyRepository.save(company);
+    // Vérifie si une entreprise avec le même nom existe déjà
+    Optional<Company> existingCompany = companyRepository.findByName(dto.getName());
+    if (existingCompany.isPresent()) {
+        return existingCompany.get(); // Retourne l'entreprise existante
     }
 
+    // Création et sauvegarde si le nom est unique
+    Company company = new Company();
+    company.setName(dto.getName());
+    return companyRepository.save(company);
+}
     @Override
     public List<Company> findAll() {
         return companyRepository.findAll();

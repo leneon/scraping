@@ -1,5 +1,6 @@
 package com.example.scraping.scraper;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 
 import org.jsoup.Jsoup;
@@ -8,12 +9,35 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 public class WebScraper {
-    public static String findWebsite(String companyName) {
-        // Dummy return. In real case, you'd use an API or engine
-        return "https://www."+companyName+".com";
+    public static String findWebsite(String baseDomain) {
+        String[] extensions = { ".com", ".fr", ".net", ".org", ".io" ,"co"};
+
+        for (String ext : extensions) {
+            String fullUrl = "https://www." + baseDomain + ext;
+            if (urlExists(fullUrl)) {
+                return fullUrl;
+            }
+        }
+
+        return null; // Aucun site trouvé
     }
 
-public static String findLogoUrl(String websiteUrl) {
+    private static boolean urlExists(String urlStr) {
+    try {
+        URL url = new URL(urlStr);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET"); // plus compatible que HEAD
+        connection.setConnectTimeout(5000);
+        connection.setReadTimeout(5000);
+        int responseCode = connection.getResponseCode();
+        System.out.println("\n\n\n\nResponse code for " + urlStr + ": " + responseCode+"\n\n\n\n");
+        return responseCode >= 200 && responseCode < 400;
+    } catch (Exception e) {
+        return false;
+    }
+}
+
+    public static String findLogoUrl(String websiteUrl) {
         try {
             Document doc = Jsoup.connect(websiteUrl)
                                 .userAgent("Mozilla/5.0")

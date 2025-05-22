@@ -55,7 +55,9 @@ public class BatchConfig {
             for (Company company : companies) {
                 String website = WebScraper.findWebsite(company.getName());
                 String logoUrl = WebScraper.findLogoUrl(website);
-
+                if (logoUrl == null) {
+                    continue; // Skip if logo URL is not found
+                }
                 Optional<CompanyLogo> existingLogoOpt = logoService.findOneByCompanyId(company.getId());
 
                 if (existingLogoOpt.isPresent()) {
