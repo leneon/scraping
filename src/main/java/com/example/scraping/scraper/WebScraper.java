@@ -38,6 +38,9 @@ public class WebScraper {
 }
 
     public static String findLogoUrl(String websiteUrl) {
+        if(websiteUrl==null)
+            return null;
+            
         try {
             Document doc = Jsoup.connect(websiteUrl)
                                 .userAgent("Mozilla/5.0")
