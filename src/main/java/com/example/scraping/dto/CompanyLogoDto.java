@@ -14,5 +14,6 @@ public class CompanyLogoDto {
     private Long companyId;
     private String websiteUrl;
     private String logoUrl;
+    private String path;
     private LocalDateTime downloadedAt;
 }

@@ -33,6 +33,7 @@ public class CompanyLogoServiceImpl implements CompanyLogoService {
         logo.setCompany(company);
         logo.setWebsiteUrl(dto.getWebsiteUrl());
         logo.setLogoUrl(dto.getLogoUrl());
+        logo.setPath(dto.getPath());
         logo.setDownloadedAt(dto.getDownloadedAt());
 
         return logoRepository.save(logo);

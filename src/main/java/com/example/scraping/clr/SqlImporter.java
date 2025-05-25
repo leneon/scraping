@@ -1,54 +1,43 @@
-// package com.example.scraping.clr;
+package com.example.scraping.clr;
 
-// import java.io.InputStream;
-// import java.nio.charset.StandardCharsets;
-// import java.sql.Connection;
-// import java.sql.Statement;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
+import org.springframework.stereotype.Component;
 
-// import javax.sql.DataSource;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 
-// import org.springframework.beans.factory.annotation.Autowired;
-// import org.springframework.boot.CommandLineRunner;
-// import org.springframework.context.annotation.Profile;
-// import org.springframework.core.io.ClassPathResource;
-// import org.springframework.jdbc.datasource.init.ScriptUtils;
-// import org.springframework.stereotype.Component;
+@Component
+public class SqlImporter {
 
-// /**
-//  * Classe qui importe le fichier SQL au démarrage de l'application,
-//  * sauf en mode "test".
-//  */
-// @Component
-// @Profile("!test") // Ne s'exécute pas lors des tests unitaires
-// public class SqlImporter implements CommandLineRunner {
+    private final DataSource dataSource;
 
-//     @Autowired
-//     private DataSource dataSource;
+    public SqlImporter(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
-//     @Override
-//     public void run(String... args) throws Exception {
-//         ClassPathResource resource = new ClassPathResource("db/migration/schema-mysql.sql");
+    @jakarta.annotation.PostConstruct
+    public void run() {
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
 
-//         if (!resource.exists()) {
-//             System.out.println("Fichier SQL introuvable : db/migration/schema-mysql.sql. Import ignoré.");
-//             return;
-//         }
+            // Vérifie si la table batch_job_instance existe déjà
+            ResultSet rs = stmt.executeQuery("SHOW TABLES LIKE 'batch_job_instance'");
 
-//        try (Connection conn = dataSource.getConnection();
-//             Statement stmt = conn.createStatement()) {
+            if (!rs.next()) {
+                // Table n'existe pas, donc on exécute le script SQL
+                ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/schema-mysql.sql"));
+                System.out.println(" Script SQL exécuté avec succès.");
+            } else {
+                // Table existe déjà, donc on ignore le script
+                System.out.println(" Script SQL ignoré car la table 'batch_job_instance' existe déjà.");
+            }
 
-//             var rs = stmt.executeQuery("SHOW TABLES LIKE 'ma_table_importee'");
-//             if (!rs.next()) {
-//                 ScriptUtils.executeSqlScript(conn, resource);
-//                 System.out.println("Script SQL exécuté avec succès.");
-//             } else {
-//                 System.out.println("Script SQL ignoré (la table existe déjà).");
-//             }
-//         }
-
-        
-
-//     }
-
-    
-// }
+        } catch (Exception e) {
+            System.err.println(" Erreur lors de l'exécution du script SQL : " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}

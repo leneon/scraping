@@ -1,4 +1,4 @@
-package com.example.scraping.resource;
+package com.example.scraping.controller;
 
 import java.util.List;
 

@@ -52,29 +52,36 @@ public class BatchConfig {
         return (contribution, chunkContext) -> {
             List<Company> companies = companyRepo.findAll();
 
-            for (Company company : companies) {
-                String website = WebScraper.findWebsite(company.getName());
-                String logoUrl = WebScraper.findLogoUrl(website);
-                if (logoUrl == null) {
-                    continue; // Skip if logo URL is not found
-                }
-                Optional<CompanyLogo> existingLogoOpt = logoService.findOneByCompanyId(company.getId());
+        for (Company company : companies) {
+            String website = WebScraper.findWebsite(company.getName());
+            String logoUrl = WebScraper.findLogoUrl(website);
 
-                if (existingLogoOpt.isPresent()) {
-                    CompanyLogo existingLogo = existingLogoOpt.get();
-                    existingLogo.setWebsiteUrl(website);
-                    existingLogo.setLogoUrl(logoUrl);
-                    existingLogo.setDownloadedAt(LocalDateTime.now());
-                    logoService.update(existingLogo);
-                } else {
-                    CompanyLogoDto dto = new CompanyLogoDto();
-                    dto.setCompanyId(company.getId());
-                    dto.setWebsiteUrl(website);
-                    dto.setLogoUrl(logoUrl);
-                    dto.setDownloadedAt(LocalDateTime.now());
-                    logoService.save(dto);
-                }
+            if (logoUrl == null || logoUrl.isBlank()) {
+                continue; 
             }
+
+            // Télécharger et stocker localement
+            String localPath = WebScraper.downloadLogo(logoUrl, company.getName());
+
+            Optional<CompanyLogo> existingLogoOpt = logoService.findOneByCompanyId(company.getId());
+
+            if (existingLogoOpt.isPresent()) {
+                CompanyLogo existingLogo = existingLogoOpt.get();
+                existingLogo.setWebsiteUrl(website);
+                existingLogo.setLogoUrl(logoUrl);
+                existingLogo.setPath(localPath); // <-- Stocke le chemin local
+                existingLogo.setDownloadedAt(LocalDateTime.now());
+                logoService.update(existingLogo);
+            } else {
+                CompanyLogoDto dto = new CompanyLogoDto();
+                dto.setCompanyId(company.getId());
+                dto.setWebsiteUrl(website);
+                dto.setLogoUrl(logoUrl);
+                dto.setPath(localPath); // <-- Stocke le chemin local
+                dto.setDownloadedAt(LocalDateTime.now());
+                logoService.save(dto);
+            }
+        }
 
             return RepeatStatus.FINISHED;
         };
