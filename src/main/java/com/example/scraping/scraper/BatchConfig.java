@@ -18,9 +18,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import com.example.scraping.dto.CompanyLogoDto;
-import com.example.scraping.entity.Company;
+import com.example.scraping.entity.Bank;
 import com.example.scraping.entity.CompanyLogo;
-import com.example.scraping.repository.CompanyRepository;
+import com.example.scraping.repository.BankRepository;
 import com.example.scraping.service.CompanyLogoService;
 
 @Configuration
@@ -34,54 +34,55 @@ public class BatchConfig {
     private PlatformTransactionManager transactionManager;
 
     @Bean
-    public Job scrapeCompanyJob(Step scrapeStep) {
-        return new JobBuilder("scrapeCompanyJob", jobRepository)
-                .start(scrapeStep)
+    public Job scrapeBankJob(Step scrapeBankStep) {
+        return new JobBuilder("scrapeBankJob", jobRepository)
+                .start(scrapeBankStep)
                 .build();
     }
 
     @Bean
-    public Step scrapeStep(Tasklet scrapeCompanyTasklet) {
-        return new StepBuilder("scrapeStep", jobRepository)
-                .tasklet(scrapeCompanyTasklet, transactionManager)
+    public Step scrapeBankStep(Tasklet scrapeBankTasklet) {
+        return new StepBuilder("scrapeBankStep", jobRepository)
+                .tasklet(scrapeBankTasklet, transactionManager)
                 .build();
     }
 
     @Bean
-    public Tasklet scrapeCompanyTasklet(CompanyRepository companyRepo, CompanyLogoService logoService) {
+    public Tasklet scrapeBankTasklet(BankRepository bankRepo, CompanyLogoService logoService) {
         return (contribution, chunkContext) -> {
-            List<Company> companies = companyRepo.findAll();
+            List<com.example.scraping.entity.Bank> banks = bankRepo.findFiveBanks();
 
-        for (Company company : companies) {
-            String website = WebScraper.findWebsite(company.getName());
-            String logoUrl = WebScraper.findLogoUrl(website);
+            for (Bank bank : banks) {
+                String name = bank.getFullLegalName();
+                String website = WebScraper.findWebsite(name);
+                String logoUrl = WebScraper.findLogoUrl(website);
 
-            if (logoUrl == null || logoUrl.isBlank()) {
-                continue; 
+                if (logoUrl == null || logoUrl.isBlank()) {
+                    continue;
+                }
+
+                // Télécharger et stocker localement
+                // String localPath = WebScraper.downloadLogo(logoUrl, name);
+
+                Optional<CompanyLogo> existingLogoOpt = logoService.findOneByCompanyId(bank.getBic());
+
+                if (existingLogoOpt.isPresent()) {
+                    CompanyLogo existingLogo = existingLogoOpt.get();
+                    existingLogo.setWebsiteUrl(website);
+                    existingLogo.setLogoUrl(logoUrl);
+                    //existingLogo.setPath(localPath);
+                    existingLogo.setDownloadedAt(LocalDateTime.now());
+                    logoService.update(existingLogo);
+                } else {
+                    CompanyLogoDto dto = new CompanyLogoDto();
+                    dto.setBankBic(bank.getBic());
+                    dto.setWebsiteUrl(website);
+                    dto.setLogoUrl(logoUrl);
+                    //dto.setPath(localPath);
+                    dto.setDownloadedAt(LocalDateTime.now());
+                    logoService.save(dto);
+                }
             }
-
-            // Télécharger et stocker localement
-            String localPath = WebScraper.downloadLogo(logoUrl, company.getName());
-
-            Optional<CompanyLogo> existingLogoOpt = logoService.findOneByCompanyId(company.getId());
-
-            if (existingLogoOpt.isPresent()) {
-                CompanyLogo existingLogo = existingLogoOpt.get();
-                existingLogo.setWebsiteUrl(website);
-                existingLogo.setLogoUrl(logoUrl);
-                existingLogo.setPath(localPath); // <-- Stocke le chemin local
-                existingLogo.setDownloadedAt(LocalDateTime.now());
-                logoService.update(existingLogo);
-            } else {
-                CompanyLogoDto dto = new CompanyLogoDto();
-                dto.setCompanyId(company.getId());
-                dto.setWebsiteUrl(website);
-                dto.setLogoUrl(logoUrl);
-                dto.setPath(localPath); // <-- Stocke le chemin local
-                dto.setDownloadedAt(LocalDateTime.now());
-                logoService.save(dto);
-            }
-        }
 
             return RepeatStatus.FINISHED;
         };

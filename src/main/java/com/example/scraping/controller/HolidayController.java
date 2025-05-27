@@ -24,9 +24,8 @@ public class HolidayController {
 
 
     @GetMapping("/{countryCode}/{year}")
-    public List<HolidayDto> getHolidays(@PathVariable String year, @PathVariable String countryCode) {
-        Integer.parseInt(year);
-        return holidayService.getHolidays(countryCode, 2025);
+    public List<HolidayDto> getHolidays(@PathVariable int  year, @PathVariable String countryCode) {
+        return holidayService.getHolidays(countryCode, year);
     }
 
     @GetMapping

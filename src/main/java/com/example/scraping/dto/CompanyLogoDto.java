@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CompanyLogoDto {
     private Long id;
-    private Long companyId;
+    private String bankBic;
     private String websiteUrl;
     private String logoUrl;
     private String path;

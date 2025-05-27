@@ -12,10 +12,10 @@ public interface CompanyLogoService {
     CompanyLogo save(CompanyLogoDto dto);
 
     // Récupérer tous les logos liés à une entreprise
-    List<CompanyLogo> findByCompanyId(Long companyId);
+    List<CompanyLogo> findByCompanyId(String companyId);
 
     // Récupérer un logo unique pour une entreprise (si un seul est autorisé)
-    Optional<CompanyLogo> findOneByCompanyId(Long companyId);
+    Optional<CompanyLogo> findOneByCompanyId(String companyId);
 
     // Mettre à jour un logo existant
     CompanyLogo update(CompanyLogo logo);

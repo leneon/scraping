@@ -9,7 +9,7 @@ import com.example.scraping.entity.CompanyLogo;
 
 public interface CompanyLogoRepository extends JpaRepository<CompanyLogo, Long> {
 
-    List<CompanyLogo> findAllByCompanyId(Long companyId);
+    List<CompanyLogo> findAllByBankBic(String companyId);
 
-    Optional<CompanyLogo> findOneByCompanyId(Long companyId);}
+    Optional<CompanyLogo> findOneByBankBic(String companyId);}
     

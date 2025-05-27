@@ -7,11 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.scraping.dto.CompanyLogoDto;
-import com.example.scraping.entity.Company;
+import com.example.scraping.entity.Bank;
 import com.example.scraping.entity.CompanyLogo;
+import com.example.scraping.repository.BankRepository;
 import com.example.scraping.repository.CompanyLogoRepository;
-import com.example.scraping.repository.CompanyRepository;
 import com.example.scraping.service.CompanyLogoService;
+
 @Service
 public class CompanyLogoServiceImpl implements CompanyLogoService {
 
@@ -19,18 +20,18 @@ public class CompanyLogoServiceImpl implements CompanyLogoService {
     private CompanyLogoRepository logoRepository;
 
     @Autowired
-    private CompanyRepository companyRepository;
+    private BankRepository bankRepository;
 
     @Override
     public CompanyLogo save(CompanyLogoDto dto) {
-        Company company = companyRepository.findById(dto.getCompanyId())
-                .orElseThrow(() -> new RuntimeException("Compagnie introuvable"));
+        Bank bank = bankRepository.findById(dto.getBankBic())
+                .orElseThrow(() -> new RuntimeException("Banque introuvable"));
 
-        // Vérifie s'il existe déjà un logo pour cette entreprise
-        Optional<CompanyLogo> existingLogoOpt = logoRepository.findOneByCompanyId(dto.getCompanyId());
+        // Vérifie s'il existe déjà un logo pour cette banque
+        Optional<CompanyLogo> existingLogoOpt = logoRepository.findOneByBankBic(dto.getBankBic());
 
         CompanyLogo logo = existingLogoOpt.orElse(new CompanyLogo());
-        logo.setCompany(company);
+        logo.setBankBic(bank.getBic());  
         logo.setWebsiteUrl(dto.getWebsiteUrl());
         logo.setLogoUrl(dto.getLogoUrl());
         logo.setPath(dto.getPath());
@@ -40,13 +41,13 @@ public class CompanyLogoServiceImpl implements CompanyLogoService {
     }
 
     @Override
-    public List<CompanyLogo> findByCompanyId(Long companyId) {
-        return logoRepository.findAllByCompanyId(companyId);
+    public List<CompanyLogo> findByCompanyId(String companyId) {
+        return logoRepository.findAllByBankBic(companyId);
     }
 
     @Override
-    public Optional<CompanyLogo> findOneByCompanyId(Long companyId) {
-        return logoRepository.findOneByCompanyId(companyId);
+    public Optional<CompanyLogo> findOneByCompanyId(String companyId) {
+        return logoRepository.findOneByBankBic(companyId);
     }
 
     @Override
